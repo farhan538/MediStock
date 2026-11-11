@@ -1,6 +1,4 @@
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
 import Welcome from "./pages/Welcome";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -11,7 +9,6 @@ import ExpiryManagement from "./pages/ExpiryManagement";
 import PurchaseManagement from "./pages/PurchaseManagement";
 import SalesManagement from "./pages/SalesManagement";
 import ReportsManagement from "./pages/ReportsManagement";
-
 import MainLayout from "./components/MainLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -21,7 +18,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
-
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
@@ -34,7 +30,6 @@ export default function App() {
             <Route path="/reports" element={<ReportsManagement />} />
           </Route>
         </Route>
-
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

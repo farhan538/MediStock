@@ -1,593 +1,165 @@
+import { Pill, AlertTriangle, CalendarClock, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
 
-import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-
-import {
-  Pill,
-  Package,
-  AlertTriangle,
-  CalendarClock,
-  TrendingUp,
-  Bell,
-  Activity,
-} from "lucide-react";
-
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-} from "recharts";
-
-const stockData = [
-  { month: "Jan", stock: 120 },
-  { month: "Feb", stock: 180 },
-  { month: "Mar", stock: 150 },
-  { month: "Apr", stock: 220 },
-  { month: "May", stock: 190 },
-  { month: "Jun", stock: 280 },
+const salesTrend = [
+  { day: "Mon", sales: 12400 }, { day: "Tue", sales: 18200 },
+  { day: "Wed", sales: 15600 }, { day: "Thu", sales: 22100 },
+  { day: "Fri", sales: 19800 }, { day: "Sat", sales: 26400 },
+  { day: "Sun", sales: 17200 },
 ];
 
-const colors = [
-  "#059669",
-  "#34d399",
-  "#a7f3d0",
-  "#d1fae5",
-  "#0f766e",
-  "#6ee7b7",
+const categoryMix = [
+  { name: "Antibiotics", value: 32, color: "#0D9488" },
+  { name: "Analgesics",  value: 24, color: "#0EA5E9" },
+  { name: "Vitamins",    value: 18, color: "#8B5CF6" },
+  { name: "Cardiac",     value: 14, color: "#F59E0B" },
+  { name: "Others",      value: 12, color: "#94A3B8" },
 ];
 
-function getDaysLeft(expiryDate) {
-  if (!expiryDate) return null;
+const lowStock = [
+  { name: "Amoxicillin 500mg", qty: 6,  threshold: 20, unit: "strips" },
+  { name: "Paracetamol 650mg", qty: 12, threshold: 40, unit: "strips" },
+  { name: "Metformin 500mg",   qty: 8,  threshold: 25, unit: "strips" },
+  { name: "Atorvastatin 10mg", qty: 3,  threshold: 15, unit: "strips" },
+];
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+const expiring = [
+  { name: "Ceftriaxone 1g",     batch: "B-2041", days: 8,  qty: 24 },
+  { name: "Insulin Glargine",   batch: "B-1189", days: 14, qty: 12 },
+  { name: "Azithromycin 500",   batch: "B-3321", days: 21, qty: 40 },
+  { name: "Salbutamol Inhaler", batch: "B-0912", days: 26, qty: 18 },
+];
 
-  const expiry = new Date(`${expiryDate}T00:00:00`);
-
-  if (Number.isNaN(expiry.getTime())) return null;
-
-  return Math.ceil(
-    (expiry.getTime() - today.getTime()) /
-      (1000 * 60 * 60 * 24)
-  );
-}
-
-function StatCard({ title, value, subtitle, icon: Icon, color }) {
+export default function Dashboard() {
   return (
-    <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <h2 className="mt-3 text-3xl font-bold text-gray-800">
-            {value}
-          </h2>
-          <p className="mt-2 text-xs text-gray-400">{subtitle}</p>
+    <div className="dash">
+      <div className="dash-kpis">
+        <KpiCard label="Total medicines" value="1,284" delta="+3.2%" trend="up" icon={Pill} />
+        <KpiCard label="Low stock items" value="18" delta="+4" trend="down" icon={AlertTriangle} tone="warning" />
+        <KpiCard label="Expiring this month" value="7" delta="-2" trend="up" icon={CalendarClock} tone="danger" />
+        <KpiCard label="Sales today" value="₹26,400" delta="+12.4%" trend="up" icon={TrendingUp} tone="success" />
+      </div>
+
+      <div className="dash-row">
+        <div className="card dash-card">
+          <div className="dash-card-head">
+            <div><h3>Sales this week</h3><p>Daily revenue from point of sale</p></div>
+            <div className="dash-total"><span>Total</span><strong>₹1,31,700</strong></div>
+          </div>
+          <div style={{ height: 260 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={salesTrend} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0D9488" stopOpacity={0.25} />
+                    <stop offset="100%" stopColor="#0D9488" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 12, fill: "#64748B" }} axisLine={false} tickLine={false} tickFormatter={(v) => `₹${v / 1000}k`} />
+                <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }} formatter={(v) => [`₹${v.toLocaleString()}`, "Sales"]} />
+                <Area type="monotone" dataKey="sales" stroke="#0D9488" strokeWidth={2.5} fill="url(#salesGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        <div className={`rounded-xl p-3 ${color}`}>
-          <Icon size={24} />
+        <div className="card dash-card">
+          <div className="dash-card-head">
+            <div><h3>Category mix</h3><p>By sales share</p></div>
+          </div>
+          <div style={{ height: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={categoryMix} dataKey="value" nameKey="name" innerRadius={58} outerRadius={85} paddingAngle={3} stroke="none">
+                  {categoryMix.map((c) => <Cell key={c.name} fill={c.color} />)}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }} formatter={(v) => [`${v}%`, ""]} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="dash-legend">
+            {categoryMix.map((c) => (
+              <div key={c.name} className="dash-legend-item">
+                <span className="dash-legend-dot" style={{ background: c.color }} />
+                <span>{c.name}</span>
+                <strong>{c.value}%</strong>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="dash-row">
+        <div className="card dash-card">
+          <div className="dash-card-head">
+            <div><h3>Low stock alerts</h3><p>Reorder soon</p></div>
+            <a href="/stock" className="btn btn-ghost btn-sm">View all <ArrowUpRight size={14} /></a>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Medicine</th><th className="right">In stock</th><th className="right">Reorder at</th><th>Status</th></tr></thead>
+              <tbody>
+                {lowStock.map((m) => (
+                  <tr key={m.name}>
+                    <td className="cell-strong">{m.name}</td>
+                    <td className="right">{m.qty} <span className="cell-muted">{m.unit}</span></td>
+                    <td className="right cell-muted">{m.threshold}</td>
+                    <td><span className={`badge ${m.qty < 5 ? "badge-danger" : "badge-warning"}`}><span className="badge-dot" />{m.qty < 5 ? "Critical" : "Low"}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="card dash-card">
+          <div className="dash-card-head">
+            <div><h3>Expiring soon</h3><p>Within 30 days</p></div>
+            <a href="/expiry" className="btn btn-ghost btn-sm">View all <ArrowUpRight size={14} /></a>
+          </div>
+          <div className="table-wrap">
+            <table className="table">
+              <thead><tr><th>Medicine</th><th>Batch</th><th className="right">Qty</th><th className="right">Expires in</th></tr></thead>
+              <tbody>
+                {expiring.map((e) => (
+                  <tr key={e.batch}>
+                    <td className="cell-strong">{e.name}</td>
+                    <td className="cell-muted">{e.batch}</td>
+                    <td className="right">{e.qty}</td>
+                    <td className="right"><span className={`badge ${e.days <= 10 ? "badge-danger" : e.days <= 20 ? "badge-warning" : "badge-neutral"}`}>{e.days} days</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-export default function Dashboard() {
-  const [medicines, setMedicines] = useState([]);
-  const [batches, setBatches] = useState([]);
-  const [search, setSearch] = useState("");
-
-  useEffect(() => {
-    const loadDashboardData = () => {
-      try {
-        const savedMedicines = JSON.parse(
-          localStorage.getItem("medistock_medicines") || "[]"
-        );
-
-        const savedBatches = JSON.parse(
-          localStorage.getItem("medistock_batches") || "[]"
-        );
-
-        setMedicines(
-          Array.isArray(savedMedicines) ? savedMedicines : []
-        );
-
-        setBatches(
-          Array.isArray(savedBatches) ? savedBatches : []
-        );
-      } catch (error) {
-        console.error("Unable to load Dashboard data:", error);
-        setMedicines([]);
-        setBatches([]);
-      }
-    };
-
-    loadDashboardData();
-
-    window.addEventListener("focus", loadDashboardData);
-    window.addEventListener("storage", loadDashboardData);
-    window.addEventListener(
-      "medistock_data_updated",
-      loadDashboardData
-    );
-
-    return () => {
-      window.removeEventListener("focus", loadDashboardData);
-      window.removeEventListener("storage", loadDashboardData);
-      window.removeEventListener(
-        "medistock_data_updated",
-        loadDashboardData
-      );
-    };
-  }, []);
-
-  // Medicine calculations
-  const totalMedicines = medicines.length;
-
-  const usableStock = medicines.reduce(
-    (total, medicine) =>
-      total + (Number(medicine.stock) || 0),
-    0
-  );
-
-  const lowStockMedicines = medicines.filter(
-    (medicine) => Number(medicine.stock) <= 10
-  );
-
-  // Expiry calculations
-  const validBatches = batches.filter(
-    (batch) => getDaysLeft(batch.expiryDate) !== null
-  );
-
-  const expiredBatches = validBatches.filter(
-    (batch) => getDaysLeft(batch.expiryDate) < 0
-  );
-
-  const expiringSoonBatches = validBatches.filter((batch) => {
-    const daysLeft = getDaysLeft(batch.expiryDate);
-    return daysLeft >= 0 && daysLeft <= 30;
-  });
-
-  const safeBatches = validBatches.filter(
-    (batch) => getDaysLeft(batch.expiryDate) > 30
-  );
-
-  // Category chart
-  const categoryCounts = medicines.reduce((result, medicine) => {
-    const category = medicine.category || "Others";
-    result[category] = (result[category] || 0) + 1;
-    return result;
-  }, {});
-
-  const categoryData = Object.entries(categoryCounts).map(
-    ([name, value]) => ({ name, value })
-  );
-
-  // Search medicines
-  const filteredMedicines = medicines.filter((medicine) =>
-    `${medicine.name || ""} ${medicine.category || ""} ${
-      medicine.manufacturer || ""
-    }`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+function KpiCard({ label, value, delta, trend, icon: Icon, tone = "neutral" }) {
+  const tones = {
+    neutral: { icon: "var(--brand-50)", fg: "var(--brand-600)" },
+    warning: { icon: "var(--warning-bg)", fg: "var(--warning)" },
+    danger:  { icon: "var(--danger-bg)",  fg: "var(--danger)" },
+    success: { icon: "var(--success-bg)", fg: "var(--success)" },
+  }[tone];
 
   return (
-    <div className="min-h-screen bg-[#f4f8f6] text-gray-800">
-
-      {/* Top Navigation */}
-      <header className="flex flex-wrap items-center justify-between gap-4 border-b border-gray-100 bg-white px-6 py-5 md:px-10">
-        <div>
-          <h1 className="text-2xl font-bold text-emerald-800">
-            MediStock
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Medicine Stock Management
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <Link
-            to="/medicines"
-            className="hidden rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 sm:block"
-          >
-            Manage Medicines
-          </Link>
-
-          <button className="relative rounded-xl bg-gray-50 p-3">
-            <Bell size={20} />
-            {expiredBatches.length + expiringSoonBatches.length > 0 && (
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />
-            )}
-          </button>
-
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 font-bold text-emerald-700">
-            M
-          </div>
-        </div>
-      </header>
-
-      <main className="p-5 md:p-10">
-
-        {/* Page Heading */}
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-800">
-              Dashboard
-            </h2>
-            <p className="mt-2 text-sm text-gray-500">
-              Welcome back! Here is your pharmacy overview.
-            </p>
-          </div>
-
-          <Link
-            to="/medicines"
-            className="flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700"
-          >
-            <Pill size={18} />
-            Add Medicine
-          </Link>
-        </div>
-
-        {/* Summary Cards */}
-        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            title="Total Medicines"
-            value={totalMedicines}
-            subtitle="Registered medicines"
-            icon={Pill}
-            color="bg-emerald-100 text-emerald-700"
-          />
-
-          <StatCard
-            title="Usable Stock"
-            value={usableStock.toLocaleString("en-IN")}
-            subtitle="Available units"
-            icon={Package}
-            color="bg-blue-100 text-blue-700"
-          />
-
-          <StatCard
-            title="Low Stock"
-            value={lowStockMedicines.length}
-            subtitle="Medicines with 10 units or less"
-            icon={AlertTriangle}
-            color="bg-amber-100 text-amber-700"
-          />
-
-          <StatCard
-            title="Expired Batches"
-            value={expiredBatches.length}
-            subtitle="Batches past expiry date"
-            icon={CalendarClock}
-            color="bg-red-100 text-red-700"
-          />
-        </section>
-
-        {/* Expiry Summary */}
-        <section className="mt-7 grid gap-5 sm:grid-cols-3">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
-            <p className="text-sm font-medium text-red-700">
-              Expired Batches
-            </p>
-            <h3 className="mt-2 text-3xl font-bold text-red-800">
-              {expiredBatches.length}
-            </h3>
-            <p className="mt-1 text-xs text-red-600">
-              Expiry date has passed
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <p className="text-sm font-medium text-amber-700">
-              Expiring Soon
-            </p>
-            <h3 className="mt-2 text-3xl font-bold text-amber-800">
-              {expiringSoonBatches.length}
-            </h3>
-            <p className="mt-1 text-xs text-amber-600">
-              Expiring within 30 days
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-            <p className="text-sm font-medium text-emerald-700">
-              Safe Batches
-            </p>
-            <h3 className="mt-2 text-3xl font-bold text-emerald-800">
-              {safeBatches.length}
-            </h3>
-            <p className="mt-1 text-xs text-emerald-600">
-              More than 30 days remaining
-            </p>
-          </div>
-        </section>
-
-        {/* Expiry Alert */}
-        <section className="mt-7 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-amber-100 p-3 text-amber-700">
-                <AlertTriangle size={24} />
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-amber-900">
-                  Expiry Alert
-                </h3>
-                <p className="mt-1 text-sm text-amber-800">
-                  {expiredBatches.length > 0
-                    ? `${expiredBatches.length} batch(es) have expired.`
-                    : expiringSoonBatches.length > 0
-                    ? `${expiringSoonBatches.length} batch(es) are expiring soon.`
-                    : validBatches.length > 0
-                    ? "No expired or soon-to-expire batches."
-                    : "No batch expiry information available yet."}
-                </p>
-              </div>
-            </div>
-
-            <Link
-              to="/expiry"
-              className="rounded-xl bg-amber-600 px-5 py-3 text-sm font-semibold text-white hover:bg-amber-700"
-            >
-              View Expiry Details
-            </Link>
-          </div>
-
-          {(expiredBatches.length > 0 ||
-            expiringSoonBatches.length > 0) && (
-            <div className="mt-5 space-y-3">
-              {[...expiredBatches, ...expiringSoonBatches]
-                .slice(0, 5)
-                .map((batch) => {
-                  const daysLeft = getDaysLeft(batch.expiryDate);
-                  const expired = daysLeft < 0;
-
-                  return (
-                    <div
-                      key={batch.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-white p-4"
-                    >
-                      <div>
-                        <p className="font-semibold text-gray-800">
-                          {batch.medicineName || "Unknown Medicine"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Batch: {batch.batchNumber || "N/A"}
-                        </p>
-                      </div>
-
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-700">
-                          Expiry: {batch.expiryDate}
-                        </p>
-                        <p
-                          className={`text-xs font-semibold ${
-                            expired ? "text-red-600" : "text-amber-600"
-                          }`}
-                        >
-                          {expired
-                            ? `Expired ${Math.abs(daysLeft)} day(s) ago`
-                            : daysLeft === 0
-                            ? "Expires today"
-                            : `${daysLeft} day(s) remaining`}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </section>
-
-        {/* Charts */}
-        <section className="mt-8 grid gap-6 xl:grid-cols-2">
-
-          {/* Monthly Stock Chart */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h3 className="font-bold text-gray-800">
-                  Monthly Stock Additions
-                </h3>
-                <p className="mt-1 text-xs text-gray-400">
-                  Sample monthly stock data
-                </p>
-              </div>
-              <TrendingUp className="text-emerald-600" />
-            </div>
-
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={stockData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    vertical={false}
-                  />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar
-                    dataKey="stock"
-                    fill="#059669"
-                    radius={[7, 7, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Category Chart */}
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <div className="mb-6">
-              <h3 className="font-bold text-gray-800">
-                Medicine Categories
-              </h3>
-              <p className="mt-1 text-xs text-gray-400">
-                Distribution of saved medicines
-              </p>
-            </div>
-
-            {categoryData.length > 0 ? (
-              <div className="flex flex-wrap items-center justify-center gap-6">
-                <div className="h-56 w-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={55}
-                        outerRadius={85}
-                        paddingAngle={4}
-                      >
-                        {categoryData.map((entry, index) => (
-                          <Cell
-                            key={entry.name}
-                            fill={colors[index % colors.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="space-y-3">
-                  {categoryData.map((item, index) => (
-                    <div
-                      key={item.name}
-                      className="flex items-center gap-2"
-                    >
-                      <span
-                        className="h-3 w-3 rounded-full"
-                        style={{
-                          backgroundColor: colors[index % colors.length],
-                        }}
-                      />
-                      <span className="text-sm text-gray-600">
-                        {item.name}
-                      </span>
-                      <span className="text-sm font-semibold">
-                        {item.value}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="py-16 text-center text-sm text-gray-400">
-                Add medicines to view category statistics.
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* Medicine Table */}
-        <section className="mt-8 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3 p-6">
-            <div>
-              <h3 className="font-bold text-gray-800">
-                Medicine Stock Overview
-              </h3>
-              <p className="mt-1 text-xs text-gray-400">
-                Recently saved medicine records
-              </p>
-            </div>
-
-            <Link
-              to="/medicines"
-              className="text-sm font-semibold text-emerald-700 hover:text-emerald-900"
-            >
-              View All
-            </Link>
-          </div>
-
-          <div className="px-6 pb-5">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search medicines..."
-              className="w-full max-w-md rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none focus:border-emerald-500"
-            />
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 text-gray-500">
-                <tr>
-                  <th className="px-6 py-4">Medicine Name</th>
-                  <th className="px-6 py-4">Category</th>
-                  <th className="px-6 py-4">Manufacturer</th>
-                  <th className="px-6 py-4">Quantity</th>
-                  <th className="px-6 py-4">Status</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {filteredMedicines.map((medicine) => {
-                  const quantity = Number(medicine.stock) || 0;
-                  const isLowStock = quantity <= 10;
-
-                  return (
-                    <tr
-                      key={medicine.id}
-                      className="border-t border-gray-100"
-                    >
-                      <td className="px-6 py-4 font-semibold text-gray-700">
-                        {medicine.name}
-                      </td>
-                      <td className="px-6 py-4 text-gray-500">
-                        {medicine.category || "Others"}
-                      </td>
-                      <td className="px-6 py-4 text-gray-500">
-                        {medicine.manufacturer || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 font-medium">
-                        {quantity}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            isLowStock
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-emerald-100 text-emerald-700"
-                          }`}
-                        >
-                          {isLowStock ? "Low Stock" : "In Stock"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            {filteredMedicines.length === 0 && (
-              <p className="py-10 text-center text-gray-400">
-                {medicines.length === 0
-                  ? "No medicines added yet. Click Add Medicine to get started."
-                  : "No matching medicines found."}
-              </p>
-            )}
-          </div>
-        </section>
-
-        {/* Bottom Information */}
-        <div className="mt-8 flex items-center gap-3 text-sm text-gray-400">
-          <Activity size={18} className="text-emerald-600" />
-          MediStock Inventory Dashboard
-        </div>
-      </main>
+    <div className="card kpi">
+      <div className="kpi-head">
+        <span className="kpi-label">{label}</span>
+        <div className="kpi-icon" style={{ background: tones.icon, color: tones.fg }}><Icon size={16} /></div>
+      </div>
+      <div className="kpi-value">{value}</div>
+      <div className={`kpi-delta ${trend}`}>
+        {trend === "up" ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+        <span>{delta}</span>
+        <span className="kpi-delta-label">vs last week</span>
+      </div>
     </div>
   );
 }

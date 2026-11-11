@@ -1,409 +1,480 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
-  motion,
-  useInView,
-  useMotionValue,
-  useReducedMotion,
-  useScroll,
-  useSpring,
-  useTransform,
-} from "framer-motion";
-import {
-  ArrowRight,
-  ShieldCheck,
-  Activity,
-  Package,
-  CalendarCheck,
-  AlertTriangle,
-  Bell,
-  CheckCircle2,
-  PlusCircle,
-  ScanLine,
-  LineChart,
+  Boxes, ShieldCheck, TrendingUp, ArrowRight, Sparkles, Zap,
+  User, ChevronDown, Check
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import MedicineScene from "../three/MedicineScene";
 
-// Change this to your admin login route (check your router file)
-const LOGIN_ROUTE = "/login";
+const STYLES = `
+/* ============ LIGHT PROFESSIONAL WELCOME PAGE ============ */
+.wl-page {
+  min-height: 100vh;
+  background: #F8FAFC;
+  color: #0F172A;
+  font-family: 'Inter', -apple-system, sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+.wl-page *, .wl-page *::before, .wl-page *::after { box-sizing: border-box; }
 
-/* ---------- helpers ---------- */
+/* Soft pastel background blobs */
+.wl-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(120px); opacity: 0.6; z-index: 0;
+}
+.wl-blob-1 { width: 600px; height: 600px; background: #CCFBF1; top: -200px; left: -200px; }
+.wl-blob-2 { width: 500px; height: 500px; background: #E0F2FE; bottom: -100px; right: -100px; }
+.wl-blob-3 { width: 400px; height: 400px; background: #F3E8FF; top: 20%; left: 40%; opacity: 0.4; }
 
-// Number that counts up when it scrolls into view
-function CountUp({ to, suffix = "", duration = 1600 }) {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  const [val, setVal] = useState(0);
+/* Nav */
+.wl-nav {
+  position: relative; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 20px 48px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+.wl-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: #0F172A; text-decoration: none; }
+.wl-logo-mark {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, #14B8A6, #0F766E);
+  color: #fff; display: grid; place-items: center; font-size: 16px;
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+}
+.wl-nav-actions { display: flex; align-items: center; gap: 16px; }
 
-  useEffect(() => {
-    if (!inView) return;
-    let raf;
-    const start = performance.now();
-    const tick = (now) => {
-      const p = Math.min((now - start) / duration, 1);
-      setVal(Math.round(to * (1 - Math.pow(1 - p, 3)))); // ease-out
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [inView, to, duration]);
+/* Role Selector Dropdown */
+.wl-role-wrap { position: relative; }
+.wl-role-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: #FFFFFF; border: 1px solid #E2E8F0;
+  padding: 8px 14px; border-radius: 8px;
+  font-size: 13.5px; font-weight: 600; color: #334155;
+  cursor: pointer; transition: all 0.15s;
+}
+.wl-role-btn:hover { border-color: #CBD5E1; background: #F8FAFC; }
+.wl-role-menu {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: #FFFFFF; border: 1px solid #E2E8F0;
+  border-radius: 10px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1);
+  padding: 6px; width: 180px; z-index: 50;
+}
+.wl-role-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 500;
+  color: #64748B; cursor: pointer; transition: all 0.15s;
+}
+.wl-role-item:hover { background: #F1F5F9; color: #0F172A; }
+.wl-role-item.active { color: #0F766E; font-weight: 600; }
 
-  return (
-    <span ref={ref}>
-      {val.toLocaleString()}
-      {suffix}
-    </span>
-  );
+/* Buttons */
+.wl-btn-ghost { font-size: 14px; font-weight: 600; color: #64748B; text-decoration: none; transition: color 0.15s; }
+.wl-btn-ghost:hover { color: #0F172A; }
+.wl-btn-primary {
+  background: #0F766E; color: #FFFFFF; text-decoration: none;
+  padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600;
+  transition: all 0.2s; box-shadow: 0 4px 12px rgba(15, 118, 110, 0.2);
+}
+.wl-btn-primary:hover { background: #115E59; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(15, 118, 110, 0.3); }
+
+/* Hero Section */
+.wl-hero {
+  position: relative; z-index: 5;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 60px; padding: 80px 48px 100px;
+  max-width: 1400px; margin: 0 auto; align-items: center;
+}
+.wl-hero-copy { max-width: 540px; }
+.wl-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #ECFDF5; border: 1px solid #A7F3D0;
+  color: #047857; padding: 6px 14px; border-radius: 20px;
+  font-size: 12.5px; font-weight: 600; margin-bottom: 24px;
+}
+.wl-headline {
+  font-size: 54px; font-weight: 800; line-height: 1.1;
+  letter-spacing: -1.5px; color: #0F172A; margin: 0 0 24px;
+}
+.wl-headline span { color: #0F766E; }
+.wl-sub { font-size: 17px; color: #64748B; line-height: 1.6; margin-bottom: 36px; }
+.wl-cta-row { display: flex; gap: 14px; margin-bottom: 48px; }
+.wl-btn-lg {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 600;
+  text-decoration: none; transition: all 0.2s;
+}
+.wl-btn-lg-primary { background: #0F766E; color: #FFFFFF; box-shadow: 0 6px 20px rgba(15, 118, 110, 0.25); }
+.wl-btn-lg-primary:hover { background: #115E59; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(15, 118, 110, 0.35); }
+.wl-btn-lg-outline { background: #FFFFFF; color: #334155; border: 1px solid #E2E8F0; }
+.wl-btn-lg-outline:hover { background: #F8FAFC; border-color: #CBD5E1; }
+
+.wl-trust { display: flex; gap: 32px; padding-top: 32px; border-top: 1px solid #E2E8F0; }
+.wl-trust div { display: flex; flex-direction: column; gap: 4px; }
+.wl-trust strong { font-size: 24px; font-weight: 700; color: #0F172A; }
+.wl-trust span { font-size: 13px; color: #64748B; font-weight: 500; }
+
+/* =========================================
+   3D MEDICINE VISUAL (PURE CSS & SVG)
+   ========================================= */
+.wl-hero-visual { 
+  position: relative; 
+  height: 500px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
 }
 
-// Glass card that floats gently around the 3D scene
-function FloatCard({ className, delay = 0, children }) {
-  const reduce = useReducedMotion();
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={reduce ? { opacity: 1, y: 0 } : { opacity: 1, y: [0, -10, 0] }}
-      transition={{
-        opacity: { delay: 0.8 + delay, duration: 0.6 },
-        y: { delay: 0.8 + delay, duration: 5, repeat: Infinity, ease: "easeInOut" },
-      }}
-      className={`absolute z-20 rounded-2xl border border-white/15 bg-[#0a2c26]/70 p-3 shadow-2xl shadow-black/40 backdrop-blur-xl ${className}`}
-    >
-      {children}
-    </motion.div>
-  );
+.wl-3d-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: wlFloat 6s ease-in-out infinite;
 }
 
-// Card with a spotlight that follows the cursor
-function SpotCard({ icon: Icon, title, text }) {
-  const x = useMotionValue(-200);
-  const y = useMotionValue(-200);
-  const bg = useTransform(
-    [x, y],
-    ([mx, my]) =>
-      `radial-gradient(220px circle at ${mx}px ${my}px, rgba(52,211,153,0.18), transparent 70%)`
-  );
-
-  return (
-    <motion.div
-      onMouseMove={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        x.set(e.clientX - r.left);
-        y.set(e.clientY - r.top);
-      }}
-      whileHover={{ y: -6 }}
-      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-lg"
-    >
-      <motion.div className="pointer-events-none absolute inset-0" style={{ background: bg }} />
-      <div className="relative">
-        <div className="mb-4 grid h-12 w-12 place-items-center rounded-xl bg-emerald-400/10 ring-1 ring-emerald-400/30 transition group-hover:bg-emerald-400/20">
-          <Icon className="text-emerald-300" size={24} />
-        </div>
-        <h3 className="text-lg font-semibold">{title}</h3>
-        <p className="mt-2 text-sm leading-6 text-emerald-100/60">{text}</p>
-      </div>
-    </motion.div>
-  );
+.wl-svg-3d {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  filter: drop-shadow(0 30px 40px rgba(15, 118, 110, 0.15));
 }
 
-const reveal = {
-  initial: { opacity: 0, y: 30 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true, margin: "-80px" },
-  transition: { duration: 0.7 },
-};
+/* Floating Glass Mini Cards */
+.wl-float {
+  position: absolute; background: rgba(255, 255, 255, 0.9); padding: 12px 16px; border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.1); border: 1px solid #F1F5F9;
+  display: flex; align-items: center; gap: 12px; z-index: 3;
+  backdrop-filter: blur(10px);
+  animation: wlFloat 5s ease-in-out infinite;
+}
+.wl-float-1 { top: 20px; left: 0; animation-delay: 0s; }
+.wl-float-2 { bottom: 40px; right: 0; animation-delay: -2.5s; }
+.wl-float-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.wl-float-text { display: flex; flex-direction: column; gap: 2px; }
+.wl-float-text span { font-size: 11.5px; color: #64748B; font-weight: 500; }
+.wl-float-text strong { font-size: 14px; color: #0F172A; font-weight: 700; }
 
-/* ---------- page ---------- */
+@keyframes wlFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-16px); }
+}
+
+/* Features Section */
+.wl-features { position: relative; z-index: 5; padding: 80px 48px; max-width: 1200px; margin: 0 auto; }
+.wl-section-head { text-align: center; margin-bottom: 56px; }
+.wl-section-head h2 { font-size: 36px; font-weight: 800; letter-spacing: -1px; color: #0F172A; margin: 0 0 16px; }
+.wl-section-head p { font-size: 16px; color: #64748B; max-width: 600px; margin: 0 auto; }
+.wl-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.wl-feature-card {
+  background: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 16px; padding: 32px;
+  transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+}
+.wl-feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.05); border-color: #CBD5E1; }
+.wl-feature-icon {
+  width: 48px; height: 48px; border-radius: 12px; background: #F0FDFA; color: #0F766E;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
+}
+.wl-feature-card h3 { font-size: 18px; font-weight: 700; color: #0F172A; margin: 0 0 12px; }
+.wl-feature-card p { font-size: 14.5px; color: #64748B; line-height: 1.6; margin: 0; }
+
+/* CTA Section */
+.wl-cta { position: relative; z-index: 5; padding: 40px 48px 80px; max-width: 1000px; margin: 0 auto; }
+.wl-cta-inner {
+  background: linear-gradient(135deg, #0F766E, #115E59);
+  border-radius: 24px; padding: 60px 40px; text-align: center; color: #FFFFFF;
+  box-shadow: 0 20px 40px -10px rgba(15, 118, 110, 0.4); position: relative; overflow: hidden;
+}
+.wl-cta-inner h2 { font-size: 32px; font-weight: 800; margin: 0 0 16px; letter-spacing: -0.5px; }
+.wl-cta-inner p { font-size: 16px; color: #CCFBF1; margin: 0 0 32px; }
+.wl-cta-inner .wl-btn-primary { background: #FFFFFF; color: #0F766E; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.wl-cta-inner .wl-btn-primary:hover { background: #F8FAFC; transform: translateY(-2px); }
+
+.wl-footer { text-align: center; padding: 32px; color: #94A3B8; font-size: 13px; font-weight: 500; border-top: 1px solid #E2E8F0; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .wl-hero { grid-template-columns: 1fr; gap: 40px; padding: 60px 32px; text-align: center; }
+  .wl-hero-copy { margin: 0 auto; }
+  .wl-cta-row { justify-content: center; }
+  .wl-trust { justify-content: center; }
+  .wl-headline { font-size: 42px; }
+  .wl-feature-grid { grid-template-columns: 1fr; }
+  .wl-float-1 { left: 10%; top: 0; }
+  .wl-float-2 { right: 10%; bottom: 0; }
+  .wl-hero-visual { height: 400px; margin-top: 20px; }
+}
+@media (max-width: 768px) {
+  .wl-nav { padding: 16px 20px; flex-direction: column; gap: 16px; }
+  .wl-nav-actions { width: 100%; justify-content: space-between; }
+  .wl-hero { padding: 40px 20px; }
+  .wl-headline { font-size: 32px; }
+  .wl-sub { font-size: 15px; }
+  .wl-cta-row { flex-direction: column; }
+  .wl-trust { gap: 20px; }
+  .wl-trust strong { font-size: 20px; }
+  .wl-float { display: none; }
+  .wl-hero-visual { height: 300px; }
+}
+`;
 
 export default function Welcome() {
-  const navigate = useNavigate();
-  const { scrollYProgress } = useScroll();
-  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+  const [role, setRole] = useState("Manager");
+  const [roleOpen, setRoleOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
-  // Soft glow that follows the mouse across the page
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const glow = useTransform(
-    [mx, my],
-    ([x, y]) =>
-      `radial-gradient(600px circle at ${x}px ${y}px, rgba(16,185,129,0.12), transparent 60%)`
-  );
-
-  const goToLogin = () => navigate(LOGIN_ROUTE);
-
-  const features = [
-    { icon: Package, title: "Stock Control", text: "Add, update and track every medicine batch with live quantities." },
-    { icon: CalendarCheck, title: "Expiry Tracking", text: "See what expires soon and act before stock goes to waste." },
-    { icon: ShieldCheck, title: "Safe Inventory", text: "Separate usable stock from expired items at a glance." },
-    { icon: Activity, title: "Stock Insights", text: "Understand what moves fast and what needs reordering." },
-  ];
-
-  const steps = [
-    { icon: PlusCircle, title: "Add your medicines", text: "Enter name, batch, quantity and expiry date." },
-    { icon: ScanLine, title: "Track automatically", text: "Stock levels and expiry dates update as you work." },
-    { icon: LineChart, title: "Act on insights", text: "Reorder low stock and clear expiring items early." },
-  ];
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setRoleOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <main
-      onMouseMove={(e) => {
-        mx.set(e.clientX);
-        my.set(e.clientY + window.scrollY);
-      }}
-      className="relative min-h-screen overflow-hidden bg-[#061f1b] text-white selection:bg-emerald-400/30"
-    >
-      {/* Scroll progress bar */}
-      <motion.div
-        style={{ scaleX: progress }}
-        className="fixed left-0 right-0 top-0 z-50 h-[3px] origin-left bg-gradient-to-r from-emerald-400 to-teal-300"
-      />
+    <>
+      <style>{STYLES}</style>
+      <div className="wl-page">
+        <div className="wl-blob wl-blob-1" />
+        <div className="wl-blob wl-blob-2" />
+        <div className="wl-blob wl-blob-3" />
 
-      {/* Background: grid + glows */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "linear-gradient(#34d399 1px, transparent 1px), linear-gradient(90deg, #34d399 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-          maskImage: "radial-gradient(ellipse at 50% 20%, black 30%, transparent 75%)",
-          WebkitMaskImage: "radial-gradient(ellipse at 50% 20%, black 30%, transparent 75%)",
-        }}
-      />
-      <motion.div className="pointer-events-none absolute inset-0" style={{ background: glow }} />
-      <div className="absolute -left-40 top-20 h-96 w-96 rounded-full bg-emerald-500/15 blur-3xl" />
-      <div className="absolute -right-40 bottom-1/3 h-96 w-96 rounded-full bg-teal-400/15 blur-3xl" />
+        {/* Navbar */}
+        <nav className="wl-nav">
+          <Link to="/" className="wl-logo">
+            <div className="wl-logo-mark">M</div>
+            <span>MediStock</span>
+          </Link>
+          
+          <div className="wl-nav-actions">
+            {/* Manager Role Selector */}
+            <div className="wl-role-wrap" ref={dropdownRef}>
+              <button className="wl-role-btn" onClick={() => setRoleOpen(!roleOpen)}>
+                <User size={16} />
+                {role}
+                <ChevronDown size={14} color="#94A3B8" />
+              </button>
+              {roleOpen && (
+                <div className="wl-role-menu">
+                  {["Manager", "Pharmacist", "Admin"].map((r) => (
+                    <div
+                      key={r}
+                      className={`wl-role-item ${role === r ? "active" : ""}`}
+                      onClick={() => { setRole(r); setRoleOpen(false); }}
+                    >
+                      {r}
+                      {role === r && <Check size={14} />}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-      {/* Navbar */}
-      <motion.nav
-        initial={{ y: -40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6 }}
-        className="relative z-30 mx-auto flex max-w-7xl items-center justify-between px-8 py-6 md:px-16"
-      >
-        <h1 className="flex items-center gap-2 text-2xl font-bold text-emerald-300">
-          <span className="grid h-9 w-9 place-items-center rounded-lg bg-emerald-400 text-lg text-[#06251e]">✚</span>
-          MediStock
-        </h1>
+            <Link to="/login" className="wl-btn-ghost">Sign in</Link>
+            <Link to="/login" className="wl-btn-primary">Get started</Link>
+          </div>
+        </nav>
 
-        <span className="hidden text-sm text-emerald-100/70 sm:block">
-          Smart Medicine Stock Management
-        </span>
-
-        <button
-          onClick={goToLogin}
-          className="rounded-lg border border-emerald-400/40 px-5 py-2 transition hover:bg-emerald-400/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-300"
-        >
-          Get Started
-        </button>
-      </motion.nav>
-
-      {/* Hero */}
-      <section className="relative z-10 mx-auto grid max-w-7xl items-center gap-6 px-8 py-10 md:grid-cols-2 md:px-16">
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-4 py-2 text-sm text-emerald-300">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-            </span>
-            Your Pharmacy. Smarter Management.
-          </span>
-
-          <h2 className="mt-7 text-5xl font-bold leading-tight md:text-6xl">
-            Manage Your
-            <span className="block bg-gradient-to-r from-emerald-300 via-teal-200 to-emerald-400 bg-clip-text text-transparent">
-              Medicine Stock
-            </span>
-            With Confidence.
-          </h2>
-
-          <p className="mt-6 max-w-lg leading-8 text-emerald-100/70">
-            Simplify your pharmacy inventory with smart medicine management,
-            stock monitoring, expiry tracking and inventory insights in one platform.
-          </p>
-
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <motion.button
-              whileHover={{ y: -4 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={goToLogin}
-              className="group relative flex items-center gap-3 overflow-hidden rounded-xl bg-emerald-400 px-7 py-4 font-semibold text-[#06251e] shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300"
-            >
-              <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/40 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-              <span className="relative">Explore Dashboard</span>
-              <ArrowRight size={20} className="relative transition group-hover:translate-x-1" />
-            </motion.button>
-
-            <a
-              href="#how-it-works"
-              className="rounded-xl border border-white/15 px-6 py-4 text-emerald-100/80 transition hover:border-emerald-400/50 hover:text-white"
-            >
-              See how it works
-            </a>
+        {/* Hero Section */}
+        <section className="wl-hero">
+          <div className="wl-hero-copy">
+            <div className="wl-badge">
+              <Sparkles size={14} />
+              <span>Trusted by 500+ pharmacies</span>
+            </div>
+            <h1 className="wl-headline">
+              The pharmacy <span>operating system</span> for modern teams.
+            </h1>
+            <p className="wl-sub">
+              Track medicines, batches, and expiry in one place. Eliminate spreadsheets and get real-time visibility into your entire pharmacy operation.
+            </p>
+            <div className="wl-cta-row">
+              <Link to="/login" className="wl-btn-lg wl-btn-lg-primary">
+                Open dashboard <ArrowRight size={18} />
+              </Link>
+              <Link to="/login" className="wl-btn-lg wl-btn-lg-outline">
+                Sign in
+              </Link>
+            </div>
+            <div className="wl-trust">
+              <div><strong>500+</strong><span>Pharmacies</span></div>
+              <div><strong>2M+</strong><span>Meds tracked</span></div>
+              <div><strong>99.9%</strong><span>Uptime</span></div>
+            </div>
           </div>
 
-          <div className="mt-8 flex items-center gap-3 text-sm text-emerald-100/60">
-            <CheckCircle2 size={18} className="text-emerald-400" />
-            No setup needed. Start tracking in minutes.
+          {/* Right Side: 3D Medicine Scene */}
+          <div className="wl-hero-visual">
+            
+            {/* Floating Card 1 */}
+            <div className="wl-float wl-float-1">
+              <div className="wl-float-icon" style={{ background: "#ECFDF5", color: "#059669" }}>
+                <TrendingUp size={18} />
+              </div>
+              <div className="wl-float-text">
+                <span>Today's sales</span>
+                <strong>₹26,400</strong>
+              </div>
+            </div>
+
+            {/* Floating Card 2 */}
+            <div className="wl-float wl-float-2">
+              <div className="wl-float-icon" style={{ background: "#F0FDFA", color: "#0F766E" }}>
+                <Boxes size={18} />
+              </div>
+              <div className="wl-float-text">
+                <span>Inventory</span>
+                <strong>1,284 Items</strong>
+              </div>
+            </div>
+
+            {/* The 3D Medicine SVG Graphic */}
+            <div className="wl-3d-scene">
+              <svg className="wl-svg-3d" viewBox="0 0 500 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="bottleBody" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" />
+                    <stop offset="100%" stopColor="#E2E8F0" />
+                  </linearGradient>
+                  <linearGradient id="bottleCap" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#0D9488" />
+                    <stop offset="100%" stopColor="#0F766E" />
+                  </linearGradient>
+                  <linearGradient id="pillBody" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" />
+                    <stop offset="100%" stopColor="#CBD5E1" />
+                  </linearGradient>
+                  <linearGradient id="pillTop" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#2DD4BF" />
+                    <stop offset="100%" stopColor="#0D9488" />
+                  </linearGradient>
+                  <linearGradient id="boxFront" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FFFFFF" />
+                    <stop offset="100%" stopColor="#F1F5F9" />
+                  </linearGradient>
+                  <linearGradient id="boxSide" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#E2E8F0" />
+                    <stop offset="100%" stopColor="#CBD5E1" />
+                  </linearGradient>
+                  <linearGradient id="boxTop" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#F8FAFC" />
+                    <stop offset="100%" stopColor="#FFFFFF" />
+                  </linearGradient>
+                  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="25" stdDeviation="20" floodColor="#0F766E" floodOpacity="0.15" />
+                  </filter>
+                  <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="0" dy="15" stdDeviation="10" floodColor="#0F172A" floodOpacity="0.08" />
+                  </filter>
+                </defs>
+
+                {/* Background Glow */}
+                <circle cx="250" cy="250" r="180" fill="#F0FDFA" opacity="0.6" filter="blur(40px)" />
+                
+                {/* Medicine Box (Isometric) */}
+                <g transform="translate(80, 180) scale(0.9)" filter="url(#softShadow)">
+                  {/* Top Face */}
+                  <path d="M100 50 L200 0 L300 50 L200 100 Z" fill="url(#boxTop)" />
+                  {/* Front Face */}
+                  <path d="M100 50 L200 100 L200 220 L100 170 Z" fill="url(#boxFront)" />
+                  {/* Side Face */}
+                  <path d="M200 100 L300 50 L300 170 L200 220 Z" fill="url(#boxSide)" />
+                  
+                  {/* Box Details */}
+                  <path d="M120 70 L180 100 L180 130 L120 100 Z" fill="#CCFBF1" />
+                  <path d="M210 115 L280 80 L280 100 L210 135 Z" fill="#E2E8F0" />
+                  <path d="M210 135 L280 100 L280 110 L210 145 Z" fill="#CBD5E1" />
+                  
+                  {/* Cross Icon on box */}
+                  <path d="M140 120 L150 125 L150 135 L160 140 L160 130 L170 135 L170 145 L160 140 L160 150 L150 145 L150 135 L140 130 Z" fill="#0F766E" />
+                </g>
+
+                {/* 3D Pill Bottle */}
+                <g transform="translate(250, 150)" filter="url(#shadow)">
+                  {/* Bottle Body */}
+                  <rect x="30" y="80" width="90" height="180" rx="15" fill="url(#bottleBody)" />
+                  {/* Bottle Highlight */}
+                  <rect x="40" y="85" width="15" height="170" rx="7" fill="#FFFFFF" opacity="0.8" />
+                  {/* Bottle Label */}
+                  <rect x="30" y="130" width="90" height="70" fill="#F8FAFC" />
+                  <rect x="35" y="135" width="80" height="4" rx="2" fill="#0F766E" />
+                  <rect x="35" y="145" width="60" height="4" rx="2" fill="#CBD5E1" />
+                  <rect x="35" y="155" width="70" height="4" rx="2" fill="#CBD5E1" />
+                  <rect x="35" y="180" width="40" height="4" rx="2" fill="#14B8A6" />
+                  
+                  {/* Bottle Cap */}
+                  <rect x="35" y="40" width="80" height="40" rx="8" fill="url(#bottleCap)" />
+                  {/* Cap Details */}
+                  <rect x="35" y="45" width="80" height="4" fill="#0F766E" opacity="0.5" />
+                  <rect x="35" y="55" width="80" height="4" fill="#0F766E" opacity="0.5" />
+                  <rect x="35" y="65" width="80" height="4" fill="#0F766E" opacity="0.5" />
+                  <rect x="40" y="42" width="10" height="35" rx="5" fill="#FFFFFF" opacity="0.3" />
+                </g>
+
+                {/* 3D Floating Capsule */}
+                <g transform="translate(180, 80) rotate(35)" filter="url(#shadow)">
+                  <rect x="0" y="0" width="60" height="140" rx="30" fill="url(#pillBody)" />
+                  <path d="M0 35 L60 35 L60 30 C60 13.4 46.6 0 30 0 C13.4 0 0 13.4 0 30 Z" fill="url(#pillTop)" />
+                  {/* Capsule Highlight */}
+                  <rect x="10" y="10" width="8" height="120" rx="4" fill="#FFFFFF" opacity="0.5" />
+                  <line x1="0" y1="35" x2="60" y2="35" stroke="#CBD5E1" strokeWidth="2" />
+                </g>
+
+                {/* Small Floating Pills */}
+                <g transform="translate(360, 320)" filter="url(#softShadow)">
+                  <rect x="0" y="0" width="30" height="70" rx="15" fill="url(#pillBody)" transform="rotate(-45)" />
+                  <path d="M-5 10 L35 10" stroke="#0F766E" strokeWidth="2" transform="rotate(-45)" />
+                </g>
+              </svg>
+            </div>
           </div>
-        </motion.div>
+        </section>
 
-        {/* 3D scene + floating cards */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1 }}
-          className="relative h-[420px] w-full md:h-[560px]"
-        >
-          <div className="absolute inset-10 rounded-full bg-emerald-400/10 blur-3xl" />
-          <MedicineScene />
-
-          <FloatCard className="left-0 top-8 w-52 md:-left-4" delay={0}>
-            <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-amber-400/15">
-                <AlertTriangle size={18} className="text-amber-300" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Low stock</p>
-                <p className="text-xs text-emerald-100/60">Paracetamol · 12 left</p>
-              </div>
+        {/* Features */}
+        <section className="wl-features">
+          <div className="wl-section-head">
+            <h2>Everything you need to manage efficiently</h2>
+            <p>A complete pharmacy management suite designed specifically for pharmacists and managers.</p>
+          </div>
+          
+          <div className="wl-feature-grid">
+            <div className="wl-feature-card">
+              <div className="wl-feature-icon"><Boxes size={24} /></div>
+              <h3>Real-time inventory</h3>
+              <p>Never run out of critical stock. Automated low-stock alerts keep your shelves full without manual checks.</p>
             </div>
-          </FloatCard>
-
-          <FloatCard className="right-0 top-1/3 w-52 md:-right-4" delay={0.4}>
-            <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-lg bg-rose-400/15">
-                <Bell size={18} className="text-rose-300" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Expiring soon</p>
-                <p className="text-xs text-emerald-100/60">3 batches in 7 days</p>
-              </div>
+            <div className="wl-feature-card">
+              <div className="wl-feature-icon"><ShieldCheck size={24} /></div>
+              <h3>Expiry tracking</h3>
+              <p>Batch-level alerts before medicines expire. Reduce wastage and stay compliant with automated reporting.</p>
             </div>
-          </FloatCard>
-
-          <FloatCard className="bottom-10 left-6 w-56 md:left-2" delay={0.8}>
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-emerald-100/70">Stock health</span>
-              <span className="font-semibold text-emerald-300">92%</span>
+            <div className="wl-feature-card">
+              <div className="wl-feature-icon"><TrendingUp size={24} /></div>
+              <h3>Business insights</h3>
+              <p>See what's selling, what's not, and where your margin really comes from with real-time analytics.</p>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-              <motion.div
-                initial={{ width: 0 }}
-                animate={{ width: "92%" }}
-                transition={{ delay: 1.6, duration: 1.4, ease: "easeOut" }}
-                className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-teal-300"
-              />
-            </div>
-          </FloatCard>
-        </motion.div>
-      </section>
+          </div>
+        </section>
 
-      {/* Stats */}
-      <section className="relative z-10 mx-auto max-w-7xl px-8 md:px-16">
-        <motion.div
-          {...reveal}
-          className="grid grid-cols-2 gap-6 rounded-2xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-lg md:grid-cols-4"
-        >
-          {[
-            { n: 10000, s: "+", l: "Medicines tracked" },
-            { n: 99, s: "%", l: "Stock accuracy" },
-            { n: 24, s: "/7", l: "Expiry monitoring" },
-            { n: 5, s: "x", l: "Faster stock checks" },
-          ].map((s) => (
-            <div key={s.l} className="text-center">
-              <p className="text-3xl font-bold text-emerald-300 md:text-4xl">
-                <CountUp to={s.n} suffix={s.s} />
-              </p>
-              <p className="mt-1 text-sm text-emerald-100/60">{s.l}</p>
-            </div>
-          ))}
-        </motion.div>
-      </section>
+        {/* CTA */}
+        <section className="wl-cta">
+          <div className="wl-cta-inner">
+            <h2>Ready to modernize your pharmacy?</h2>
+            <p>Join 500+ pharmacies already using MediStock to streamline their operations.</p>
+            <Link to="/login" className="wl-btn-primary" style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "12px 24px", fontSize: "15px" }}>
+              <Zap size={18} /> Get started free
+            </Link>
+          </div>
+        </section>
 
-      {/* Features */}
-      <section className="relative z-10 mx-auto max-w-7xl px-8 py-24 md:px-16">
-        <motion.div {...reveal} className="mx-auto max-w-2xl text-center">
-          <h3 className="text-3xl font-bold md:text-4xl">Everything your pharmacy shelf needs</h3>
-          <p className="mt-4 text-emerald-100/60">
-            One place to see what you have, what is running out, and what is about to expire.
-          </p>
-        </motion.div>
-
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {features.map((f, i) => (
-            <motion.div
-              key={f.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.6 }}
-            >
-              <SpotCard {...f} />
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="relative z-10 mx-auto max-w-5xl px-8 pb-24 md:px-16">
-        <motion.h3 {...reveal} className="text-center text-3xl font-bold md:text-4xl">
-          Up and running in three steps
-        </motion.h3>
-
-        <div className="relative mt-14 grid gap-10 md:grid-cols-3">
-          <div className="absolute left-[16%] right-[16%] top-8 hidden h-px bg-gradient-to-r from-transparent via-emerald-400/40 to-transparent md:block" />
-          {steps.map((s, i) => (
-            <motion.div
-              key={s.title}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15, duration: 0.6 }}
-              className="relative text-center"
-            >
-              <div className="relative z-10 mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-400/40 bg-[#0a2c26] shadow-lg shadow-emerald-500/10">
-                <s.icon className="text-emerald-300" size={26} />
-              </div>
-              <h4 className="mt-5 text-lg font-semibold">
-                {i + 1}. {s.title}
-              </h4>
-              <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-emerald-100/60">{s.text}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="relative z-10 mx-auto max-w-5xl px-8 pb-24 md:px-16">
-        <motion.div
-          {...reveal}
-          className="relative overflow-hidden rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/20 via-[#0a2c26] to-teal-500/10 p-10 text-center md:p-14"
-        >
-          <div className="absolute -top-20 left-1/2 h-48 w-96 -translate-x-1/2 rounded-full bg-emerald-400/20 blur-3xl" />
-          <h3 className="relative text-3xl font-bold md:text-4xl">Ready to take control of your stock?</h3>
-          <p className="relative mx-auto mt-4 max-w-xl text-emerald-100/70">
-            Log in as admin to see your inventory, expiry dates and insights in one view.
-          </p>
-          <motion.button
-            whileHover={{ y: -4 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={goToLogin}
-            className="relative mt-8 inline-flex items-center gap-3 rounded-xl bg-emerald-400 px-8 py-4 font-semibold text-[#06251e] shadow-lg shadow-emerald-500/30 transition hover:bg-emerald-300"
-          >
-            Admin Login
-            <ArrowRight size={20} />
-          </motion.button>
-        </motion.div>
-      </section>
-
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-white/10 px-8 py-6 text-center text-sm text-emerald-100/40">
-        © 2026 MediStock | Smart Medicine Stock Management System
-      </footer>
-    </main>
+        <footer className="wl-footer">
+          © 2026 MediStock. Built for pharmacists.
+        </footer>
+      </div>
+    </>
   );
 }
