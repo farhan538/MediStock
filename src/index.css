@@ -1,0 +1,165 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Inter, Arial, sans-serif;
+  background: #f4faf8;
+  color: #123b35;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+/* ==============================
+   MediStock Dark Mode
+================================ */
+
+.dark,
+.dark body,
+.dark #root {
+  background-color: #0f172a;
+  color: #f1f5f9;
+}
+
+/* Main page backgrounds */
+.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-gray-50,
+.dark .bg-slate-50 {
+  background-color: #1e293b !important;
+}
+
+.dark .bg-gray-100,
+.dark .bg-slate-100 {
+  background-color: #0f172a !important;
+}
+
+.dark .bg-gray-200,
+.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* Text colors */
+.dark .text-black,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #cbd5e1 !important;
+}
+
+/* Borders */
+.dark .border-gray-100,
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+/* Tables */
+.dark table {
+  color: #f1f5f9;
+}
+
+.dark thead {
+  background-color: #334155 !important;
+}
+
+.dark tbody tr {
+  border-color: #334155 !important;
+}
+
+.dark td,
+.dark th {
+  border-color: #334155 !important;
+}
+
+/* Form fields */
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Shadows */
+.dark .shadow,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl {
+  --tw-shadow-color: rgb(0 0 0 / 30%);
+}
+
+/* Hover backgrounds */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: #334155 !important;
+}
+/* Complete MediStock Dark Theme */
+
+html.dark,
+html.dark body,
+html.dark #root {
+  background: #0f172a !important;
+  color: #f1f5f9;
+}
+
+html.dark main,
+html.dark main > div {
+  background-color: #0f172a !important;
+  color: #f1f5f9;
+}
+
+html.dark .bg-white,
+html.dark .bg-gray-50,
+html.dark .bg-gray-100,
+html.dark .bg-slate-50,
+html.dark .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+html.dark .text-gray-900,
+html.dark .text-gray-800,
+html.dark .text-gray-700,
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+  color: #f1f5f9 !important;
+}
+
+html.dark input,
+html.dark select,
+html.dark textarea {
+  background-color: #1e293b !important;
+  color: #f1f5f9 !important;
+  border-color: #475569 !important;
+}
